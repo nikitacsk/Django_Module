@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Return List</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>User</th>
+            <th>Requested At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for return_obj in returns %}
+        <tr>
+            <td>{{ return_obj.order.id }}</td>
+            <td>{{ return_obj.order.product.name }}</td>
+            <td>{{ return_obj.order.quantity }}</td>
+            <td>{{ return_obj.order.user.username }}</td>
+            <td>{{ return_obj.requested_at }}</td>
+            <td>
+                <a href="{% url 'admin_handle_return' return_obj.pk 'approve' %}">Approve</a> |
+                <a href="{% url 'admin_handle_return' return_obj.pk 'reject' %}">Reject</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

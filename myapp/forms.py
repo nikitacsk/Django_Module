@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import User, Product
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -8,7 +8,12 @@ class UserRegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ['username', 'password1', 'password2', 'wallet', 'is_superuser']
+        fields = ['username', 'password1', 'password2', 'wallet']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.fields:
+            self.fields[field_name].help_text = None
 
     def clean_wallet(self):
         wallet = self.cleaned_data.get('wallet')
@@ -22,3 +27,9 @@ class UserRegistrationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        fields = ['name', 'description', 'price', 'stock']
