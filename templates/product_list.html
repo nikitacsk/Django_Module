@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>List of products</h2>
+<ul>
+    {% for product in products %}
+    <li>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.description }}</p>
+        <p>Price: {{ product.price }} Usd</p>
+        <p>Quantity in stock: {{ product.stock }}</p>
+
+        {% if request.user.is_authenticated %}
+        <form method="post" action="{% url 'purchase' product.id %}">
+            {% csrf_token %}
+            <label for="quantity">Quantity:</label>
+            <input type="number" name="quantity" min="1" max="{{ product.stock }}">
+            <button type="submit">Buy</button>
+        </form>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, Product
+from .models import User, Product, Order
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -33,3 +33,9 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ['name', 'description', 'price', 'stock']
+
+
+class PurchaseForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['quantity']

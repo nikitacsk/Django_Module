@@ -1,11 +1,13 @@
+from django.utils import timezone
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
-from .forms import UserRegistrationForm, ProductForm
+from .forms import UserRegistrationForm, ProductForm, PurchaseForm
 from .models import User, Product, Return, Order
 from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
+from django.contrib import messages
 
 
 class UserRegistrationView(CreateView):
@@ -33,7 +35,7 @@ class HomeView(TemplateView):
     template_name = 'home.html'
 
 
-class ProductListView(ListView):
+class AdminProductListView(ListView):
     model = Product
     template_name = 'admin/product_list.html'
     context_object_name = 'products'
@@ -99,3 +101,71 @@ class HandleReturnView(View):
             return_obj.delete()
 
         return redirect('Admin_return_list')
+
+
+class ProductListView(View):
+    def get(self, request):
+        products = Product.objects.all()
+        return render(request, 'product_list.html', {'products': products})
+
+
+class PurchaseView(View):
+    def post(self, request, product_id):
+        product = get_object_or_404(Product, id=product_id)
+        form = PurchaseForm(request.POST)
+
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        if form.is_valid():
+            quantity = form.cleaned_data['quantity']
+            if quantity > product.stock:
+                messages.error(request, 'Not enough goods in stock.')
+                return redirect('product_list')
+
+            total_price = quantity * product.price
+            if total_price > request.user.wallet:
+                messages.error(request, 'There are not enough funds for this purchase.')
+                return redirect('product_list')
+
+            order = Order.objects.create(
+                user=request.user,
+                product=product,
+                quantity=quantity,
+            )
+            order.save()
+            product.stock -= quantity
+            product.save()
+            request.user.wallet -= total_price
+            request.user.save()
+
+            messages.success(request, 'The purchase is successful!')
+            return redirect('product_list')
+        else:
+            messages.error(request, 'Incorrect data.')
+            return redirect('product_list')
+
+
+class OrderListView(View):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
+
+        orders = Order.objects.filter(user=request.user)
+        return render(request, 'order_list.html', {'orders': orders})
+
+
+class ReturnView(View):
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+
+        if not request.user.is_authenticated or order.user != request.user:
+            return redirect('login')
+
+        if (timezone.now() - order.created_at).total_seconds() > 180:
+            messages.error(request, 'The product cannot be returned. More than 3 minutes have passed.')
+            return redirect('order_list')
+
+        Return.objects.create(order=order)
+        messages.success(request, 'Return request sent.')
+        return redirect('order_list')
