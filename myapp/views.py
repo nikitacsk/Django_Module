@@ -8,6 +8,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class UserRegistrationView(CreateView):
@@ -50,7 +51,7 @@ class ProductCreateView(CreateView):
     model = Product
     form_class = ProductForm
     template_name = 'admin/add_product.html'
-    success_url = '/Admin/products/'
+    success_url = '/stuff/products/'
 
     def dispatch(self, *args, **kwargs):
         if not self.request.user.is_superuser:
@@ -62,7 +63,7 @@ class ProductUpdateView(UpdateView):
     model = Product
     form_class = ProductForm
     template_name = 'admin/edit_product.html'
-    success_url = '/Admin/products/'
+    success_url = '/stuff/products/'
 
     def dispatch(self, *args, **kwargs):
         if not self.request.user.is_superuser:
@@ -100,7 +101,7 @@ class HandleReturnView(View):
         elif action == 'reject':
             return_obj.delete()
 
-        return redirect('Admin_return_list')
+        return redirect('admin_return_list')
 
 
 class ProductListView(View):
@@ -109,13 +110,12 @@ class ProductListView(View):
         return render(request, 'product_list.html', {'products': products})
 
 
-class PurchaseView(View):
+class PurchaseView(LoginRequiredMixin, View):
+    login_url = '/login/'
+
     def post(self, request, product_id):
         product = get_object_or_404(Product, id=product_id)
         form = PurchaseForm(request.POST)
-
-        if not request.user.is_authenticated:
-            return redirect('login')
 
         if form.is_valid():
             quantity = form.cleaned_data['quantity']
@@ -146,20 +146,23 @@ class PurchaseView(View):
             return redirect('product_list')
 
 
-class OrderListView(View):
-    def get(self, request):
-        if not request.user.is_authenticated:
-            return redirect('login')
+class OrderListView(LoginRequiredMixin, View):
+    login_url = '/login/'
 
+    def get(self, request):
         orders = Order.objects.filter(user=request.user)
         return render(request, 'order_list.html', {'orders': orders})
 
 
-class ReturnView(View):
+class ReturnView(LoginRequiredMixin, View):
+    login_url = '/login/'
+
     def post(self, request, order_id):
         order = get_object_or_404(Order, id=order_id)
+        order.is_clicked = True
+        order.save()
 
-        if not request.user.is_authenticated or order.user != request.user:
+        if order.user != request.user:
             return redirect('login')
 
         if (timezone.now() - order.created_at).total_seconds() > 180:

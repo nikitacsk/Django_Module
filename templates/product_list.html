@@ -7,10 +7,10 @@
     <li>
         <h3>{{ product.name }}</h3>
         <p>{{ product.description }}</p>
-        <p>Price: {{ product.price }} Usd</p>
+        <p>Price: {{ product.price }} USD</p>
         <p>Quantity in stock: {{ product.stock }}</p>
 
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and not request.user.is_superuser %}
         <form method="post" action="{% url 'purchase' product.id %}">
             {% csrf_token %}
             <label for="quantity">Quantity:</label>

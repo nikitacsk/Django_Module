@@ -7,13 +7,14 @@
     <li>
         <h3>{{ order.product.name }}</h3>
         <p>Quantity: {{ order.quantity }}</p>
-        <p>Price: {{ order.total_price }} грн</p>
-        <p>Order time: {{ order.ordered_at }}</p>
-
+        <p>Price: {{ order.total_price }} USD</p>
+        <p>Order time: {{ order.created_at }}</p>
+        {% if not order.is_clicked %}
         <form method="post" action="{% url 'return_order' order.id %}">
             {% csrf_token %}
             <button type="submit">Return the product</button>
         </form>
+        {% endif %}
     </li>
     {% endfor %}
 </ul>

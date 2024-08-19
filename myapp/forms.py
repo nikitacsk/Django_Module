@@ -34,6 +34,19 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'description', 'price', 'stock']
 
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price is not None and price < 0:
+            raise forms.ValidationError("Price cannot be negative.")
+        return price
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.price = self.cleaned_data['price']
+        if commit:
+            user.save()
+        return user
+
 
 class PurchaseForm(forms.ModelForm):
     class Meta:

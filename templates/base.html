@@ -16,6 +16,12 @@
                     <li><a href="{% url 'login' %}">Login</a></li>
                     <li><a href="{% url 'register' %}">Register</a></li>
                 {% endif %}
+                <li><a href="{% url 'product_list' %}">Products</a></li>
+                <li><a href="{% url 'order_list' %}">Orders</a></li>
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'admin_product_list' %}">Admin products list</a></li>
+                    <li><a href="{% url 'admin_return_list' %}">Returns</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
